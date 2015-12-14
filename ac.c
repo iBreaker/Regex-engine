@@ -8,19 +8,19 @@
 
 const  int MAXQ = 500000+10;
 const  int MAXN = 1000000+10;
-const  int MAXK = 26;  //自动机里字符集的大小 
+const  int MAXK = 26;           //自动机里字符集的大小(只支持26个小写字母)
 
 struct  TrieNode
 {
-	TrieNode* fail;         // 
-	TrieNode* next[MAXK];
+	TrieNode* fail;         // fail表
+	TrieNode* next[MAXK];   // goto表
 	bool danger;            // 该节点是否为某模式串的终结点 
 	int  cnt;               // 以该节点为终结点的模式串个数
 	
 	TrieNode()
 	{
 		fail = NULL;
-		memset(next, NULL, sizeof(next));
+		memset(next, 0, sizeof(next));
 		danger = false;
 		cnt = 0;
 	}
@@ -29,16 +29,16 @@ struct  TrieNode
 
 //文本字符串
 char  msg[MAXN];
-int   N;
+int   N;            // 模式串数量
 
-void  TrieInsert(char *s)   //插入新的模式串
+void  TrieInsert(char *s)   //插入新的模式串 (goto 表)
 {
 	int  i = 0;
 	TrieNode *ptr = root;
 	while(s)
 	{
-		int idx = s - 'a';
-		if(ptr->next[idx] == NULL)
+		int idx = (int)*s - (int)'a';
+		if(ptr->next[idx] == NULL)      // 没有对应的状态 创建一个新的节点
 			ptr->next[idx] = new TrieNode();
 		ptr = ptr->next[idx];
 		i++;
@@ -62,19 +62,19 @@ void  Init()    //
 	}
 }
 
-void  Build_AC_Automation()     // 创建ac状态机
+void  Build_AC_Automation()     // 创建ac状态机 (fail 表)
 {
 	int  rear = 1, front = 0, i;
 	que[0] = root;
-	root->fail = NULL;
+	root->fail = NULL;          // NULL指向本身
 	while(rear != front)
 	{
-		TrieNode *cur = que[front++];
-		for(i = 0; i < 26; i++)
-			if(cur->next != NULL)
+		TrieNode *cur = que[front++];   // que是什么
+		for(i = 0; i < 26; i++)         // 对于每个节点 循环遍历goto表
+			if(cur->next[i] != NULL)    // next[i]有对应的跳转
 			{
 				if(cur == root)
-					cur->next->fail = root;
+					cur->next[i]->fail = root;
 				else
 				{
 					TrieNode *ptr = cur->fail;
@@ -82,14 +82,14 @@ void  Build_AC_Automation()     // 创建ac状态机
 					{
 						if(ptr->next != NULL)
 						{
-							cur->next->fail = ptr->next;
-							if(ptr->next->danger == true)
-								cur->next->danger = true;
+							cur->next = ptr->next;
+							if(ptr->next[i]->danger == true)
+								cur->next[i]->danger = true;
 							break;
 						}
 						ptr = ptr->fail;
 					}
-					if(ptr == NULL) cur->next->fail = root;
+					if(ptr == NULL) cur->next[i]->fail = root;
 				}
 				que[rear++] = cur->next;
 			}
@@ -102,12 +102,12 @@ int  AC_Search()    // ac查找
 	TrieNode *ptr = root;
 	while(msg)
 	{
-		int  idx = msg-'a';
+		int  idx = (int)*msg - (int)'a';
 		while(ptr->next[idx] == NULL && ptr != root) ptr = ptr->fail;
 		ptr = ptr->next[idx];
 		if(ptr == NULL) ptr = root;
 		TrieNode *tmp = ptr;
-		while(tmp != NULL )&& tmp->cnt != -1)
+		while((tmp != NULL )&& (tmp->cnt != -1))
 		{
 			ans += tmp->cnt;	//统计文本中出现过的不同模式串数量
 			tmp->cnt = -1;//对于每个模式串的出现只计算一次，如统计所有出现则应注释该行
