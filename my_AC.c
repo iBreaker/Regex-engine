@@ -6,7 +6,7 @@
 typedef struct node
 {
     int go[26];
-    int failre;
+    int failure;
     int end;
 
 }Node;
@@ -59,6 +59,27 @@ ACsearch()
 
 }
 
+char cur_list[10];
+int now_position = 0;
+
+push(char str)
+{
+    if(now_position == 9)
+        return;
+    cur_list[now_position] = str;
+    now_position ++;
+}
+
+char pop()
+{
+    if(now_position == 0)
+        return '!';
+    now_position --;
+    return cur_list[now_position];
+}
+
+
+
 copy_char(char * start, char * str)
 {
         int i = 0;
@@ -75,20 +96,55 @@ copy_char(char * start, char * str)
         }
 }
 
-void print(Node * p)
+void traversal(Node * p)
 {
     int i = 0;
     for(i=0; i < 26; i++)
     {
         if(p->go[i] != 0)
         {
-            printf("%c", i + 'a');
-            print(&ACNode[p->go[i]]);
+            push((char)(i + 'a'));
+            printf("push %c\n", i + 'a');
+            
+            // 循环后缀子串
+            int j = 0;
+            for(j = 1; j < now_position; j++)
+            {
+                int current_index = 0;
+                int k = j;
+
+                // 对于每一个后缀字串遍历字符
+                while( k < now_position )
+                {
+                    char tmp = cur_list[k];
+                    int index = tmp - 'a';
+                    if(ACNode[current_index].go[index] != 0)
+                    {
+                        current_index = ACNode[current_index].go[index];
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    k++;
+                }
+
+                if( k == now_position) // 匹配到最长后缀字串
+                {
+                    p->failure = current_index;
+                    printf("failure to %d\n", current_index);
+                    break;
+                }
+            }
+
+
+
+            traversal(&ACNode[p->go[i]]);
         }
-    }
-
-
+    }    
+    printf(" pop %c\n", pop());
 }
+
 void main(void)
 {
     char pattern[4][10];
@@ -105,5 +161,5 @@ void main(void)
         create_goto(pattern[i]);       
     }
 
-    print(&(ACNode[0]));
+    traversal(&(ACNode[0]));
 }
