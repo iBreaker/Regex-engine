@@ -33,3 +33,4 @@
 
 .coding-ide
 *.swp
+.idea/
